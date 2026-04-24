@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen bg-black flex items-center justify-center" style={{ fontFamily: 'Arial, sans-serif' }}>
       <div className="flex flex-col items-center gap-8">
-        <h1 className="text-4xl font-bold tracking-widest text-blue-500 uppercase">🎤 Karaoke</h1>
+        <img src="/karaoke_icon.png" alt="Karaoke" className="h-20 w-20 object-contain" />
         <form onSubmit={submit} className="flex flex-col gap-4 w-72">
           <input
             type="password"
@@ -43,7 +43,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !password}
-            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-lg transition-colors"
+            className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-lg transition-colors"
           >
             {loading ? '...' : 'Enter'}
           </button>
