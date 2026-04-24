@@ -7,8 +7,7 @@ export default function LoginPage() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit() {
     setLoading(true);
     setError(false);
 
@@ -27,10 +26,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="h-screen bg-black flex items-center justify-center" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div className="h-screen flex items-center justify-center" style={{ fontFamily: 'Arial, sans-serif', background: '#0d0a14' }}>
       <div className="flex flex-col items-center gap-8">
-        <h1 className="text-4xl font-bold tracking-widest text-blue-500 uppercase">🎤 Karaoke</h1>
-        <form onSubmit={submit} className="flex flex-col gap-4 w-72">
+        <span className="text-6xl">🎤</span>
+        <form action={submit} className="flex flex-col gap-4 w-72">
           <input
             type="password"
             value={password}
@@ -43,7 +42,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading || !password}
-            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-lg transition-colors"
+            className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-lg transition-colors"
           >
             {loading ? '...' : 'Enter'}
           </button>
