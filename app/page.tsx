@@ -139,7 +139,7 @@ export default function KaraokeApp() {
   const NAV_H = 'h-16';
 
   return (
-    <div className="h-screen bg-black text-white overflow-hidden" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div className="h-screen text-white overflow-hidden" style={{ fontFamily: 'Arial, sans-serif', background: '#0d0a14' }}>
 
       {/* Toasts */}
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none">
@@ -166,7 +166,7 @@ export default function KaraokeApp() {
         {!isPlayerMode && (
           <motion.div
             key="discovery"
-            className="h-full flex flex-col bg-zinc-950"
+            className="h-full flex flex-col bg-[#110d1c]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -267,7 +267,7 @@ export default function KaraokeApp() {
             transition={{ duration: 0.35 }}
           >
             {/* Main player */}
-            <div className="flex-1 flex flex-col bg-zinc-950 min-w-0">
+            <div className="flex-1 flex flex-col bg-[#110d1c] min-w-0">
               <header className={`flex items-center justify-between px-8 ${NAV_H} border-b border-zinc-800 shrink-0`}>
                 <img src="/karaoke_icon.png" alt="Karaoke" className="h-10 w-10 object-contain" />
                 {nowPlaying && (
@@ -318,10 +318,10 @@ export default function KaraokeApp() {
             </div>
 
             {/* Right sidebar — search lives here, not in nav */}
-            <div className="w-md bg-zinc-950 border-l border-zinc-800 flex flex-col shrink-0">
+            <div className="w-md bg-[#110d1c] border-l border-zinc-800 flex flex-col shrink-0">
 
               {/* Search bar embedded in sidebar content */}
-              <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-zinc-800 shrink-0">
+              <div className="flex items-center gap-2 px-4 h-16 border-b border-zinc-800 shrink-0">
                 <input
                   ref={inputRef}
                   type="text"
@@ -349,7 +349,7 @@ export default function KaraokeApp() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.2 }}
-                    className="border-b border-zinc-800 overflow-y-auto max-h-72"
+                    className="border-b border-zinc-800"
                   >
                     {ResultsList}
                   </motion.div>
