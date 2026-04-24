@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div className="h-screen bg-black flex items-center justify-center" style={{ fontFamily: 'Arial, sans-serif' }}>
       <div className="flex flex-col items-center gap-8">
-        <img src="/karaoke_icon.png" alt="Karaoke" className="h-20 w-20 object-contain" />
+        <span className="text-6xl">🎤</span>
         <form onSubmit={submit} className="flex flex-col gap-4 w-72">
           <input
             type="password"
