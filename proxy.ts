@@ -10,10 +10,13 @@ export function proxy(request: NextRequest) {
   const isGuestQueueMutation = ['POST', 'DELETE'].includes(request.method)
     && request.nextUrl.pathname.startsWith('/api/session/')
     && request.nextUrl.pathname.endsWith('/queue');
+  const isGuestPlaybackMutation = request.method === 'POST'
+    && request.nextUrl.pathname.startsWith('/api/session/')
+    && request.nextUrl.pathname.endsWith('/now-playing');
   const isSearchApi = request.nextUrl.pathname === '/api/search';
   const isRealtimeApi = request.nextUrl.pathname === '/api/realtime';
 
-  if (isAuthApi || isSessionPage || isSessionRead || isGuestQueueMutation || isSearchApi || isRealtimeApi) return NextResponse.next();
+  if (isAuthApi || isSessionPage || isSessionRead || isGuestQueueMutation || isGuestPlaybackMutation || isSearchApi || isRealtimeApi) return NextResponse.next();
 
   if (process.env.APP_PASSWORD && auth === process.env.APP_PASSWORD) {
     if (isLoginPage) return NextResponse.redirect(new URL('/', request.url));
@@ -25,5 +28,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)'],
 };

@@ -4,16 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FiSearch, FiSkipForward, FiPlusCircle, FiX, FiList } from 'react-icons/fi';
 import { BsFillPlayFill } from 'react-icons/bs';
+import { toast } from 'sonner';
 import { SessionQr } from '@/components/session-qr';
 import { sessionChannel, type QueueItem, type Video } from '@/lib/session';
 import { useRealtime } from '@/lib/realtime-client';
-
-interface Toast {
-  id: number;
-  title: string;
-}
-
-let toastCounter = 0;
 
 export default function KaraokeApp() {
   const [query, setQuery] = useState('');
@@ -23,7 +17,6 @@ export default function KaraokeApp() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [toasts, setToasts] = useState<Toast[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isPlayerMode = queue.length > 0 || !!nowPlaying;
@@ -62,12 +55,6 @@ export default function KaraokeApp() {
     void initializeSession();
   }, [applySession]);
 
-  function showToast(title: string) {
-    const id = ++toastCounter;
-    setToasts(t => [...t, { id, title }]);
-    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000);
-  }
-
   function clearSearch() {
     setQuery('');
     setResults([]);
@@ -98,7 +85,7 @@ export default function KaraokeApp() {
     });
     if (!response.ok) return;
     applySession(await response.json());
-    showToast(video.title);
+    toast.success('Added to queue', { description: video.title });
   }
 
   async function playNow(video: Video) {
@@ -121,14 +108,17 @@ export default function KaraokeApp() {
     clearSearch();
   }
 
-  async function removeFromQueue(queueItemId: string) {
+  async function removeFromQueue(queueItem: QueueItem) {
     if (!sessionId) return;
     const response = await fetch(`/api/session/${sessionId}/queue`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ queueItemId }),
+      body: JSON.stringify({ queueItemId: queueItem.id }),
     });
-    if (response.ok) applySession(await response.json());
+    if (response.ok) {
+      applySession(await response.json());
+      toast.success('Removed from queue', { description: queueItem.video.title });
+    }
   }
 
   /* Shared results list — used in both modes */
@@ -190,25 +180,6 @@ export default function KaraokeApp() {
 
   return (
     <div className="h-screen text-white overflow-hidden" style={{ fontFamily: 'Arial, sans-serif', background: '#0d0a14' }}>
-
-      {/* Toasts */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center pointer-events-none">
-        <AnimatePresence>
-          {toasts.map(toast => (
-            <motion.div
-              key={toast.id}
-              initial={{ opacity: 0, y: -16, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.9 }}
-              transition={{ duration: 0.25 }}
-              className="bg-purple-600 text-white text-sm font-semibold px-5 py-3 rounded-lg shadow-lg max-w-xs text-center"
-            >
-              Added to queue
-              <span className="block text-xs font-normal text-purple-200 truncate">{toast.title}</span>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
 
       <AnimatePresence mode="wait">
 
@@ -450,7 +421,7 @@ export default function KaraokeApp() {
                           <p className="text-zinc-500 text-xs truncate">{item.video.channel}</p>
                         </div>
                         <button
-                          onClick={() => void removeFromQueue(item.id)}
+                          onClick={() => void removeFromQueue(item)}
                           aria-label="Remove"
                           className="text-zinc-600 hover:text-red-400 shrink-0 transition-colors"
                         >

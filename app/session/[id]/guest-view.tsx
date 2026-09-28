@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { FiPlusCircle, FiSearch, FiX } from 'react-icons/fi'
+import { FiPlusCircle, FiSearch, FiSkipForward, FiX } from 'react-icons/fi'
+import { BsFillPlayFill } from 'react-icons/bs'
+import { toast } from 'sonner'
 import { sessionChannel, type QueueItem, type Video } from '@/lib/session'
 import { useRealtime } from '@/lib/realtime-client'
 
@@ -23,6 +25,8 @@ export function GuestView({ sessionId }: GuestViewProps) {
 	const [isLoading, setIsLoading] = useState(false)
 	const [hasSearched, setHasSearched] = useState(false)
 	const [hasEnded, setHasEnded] = useState(false)
+	const [isAdvancing, setIsAdvancing] = useState(false)
+	const [isPlayingVideoId, setIsPlayingVideoId] = useState<string | null>(null)
 
 	const loadSession = useCallback(async () => {
 		const response = await fetch(`/api/session/${sessionId}`, { cache: 'no-store' })
@@ -72,20 +76,62 @@ export function GuestView({ sessionId }: GuestViewProps) {
 			setHasEnded(true)
 			return
 		}
-		if (response.ok) setSession(await response.json() as SessionState)
+		if (response.ok) {
+			setSession(await response.json() as SessionState)
+			toast.success('Added to queue', { description: video.title })
+		}
 	}
 
-	async function handleRemove(queueItemId: string) {
+	async function handlePlayNow(video: Video) {
+		if (isPlayingVideoId) return
+
+		setIsPlayingVideoId(video.id)
+		try {
+			const response = await fetch(`/api/session/${sessionId}/now-playing`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ video }),
+			})
+			if (response.status === 404) {
+				setHasEnded(true)
+				return
+			}
+			if (response.ok) setSession(await response.json() as SessionState)
+		} finally {
+			setIsPlayingVideoId(null)
+		}
+	}
+
+	async function handleRemove(queueItem: QueueItem) {
 		const response = await fetch(`/api/session/${sessionId}/queue`, {
 			method: 'DELETE',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ queueItemId }),
+			body: JSON.stringify({ queueItemId: queueItem.id }),
 		})
 		if (response.status === 404) {
 			setHasEnded(true)
 			return
 		}
-		if (response.ok) setSession(await response.json() as SessionState)
+		if (response.ok) {
+			setSession(await response.json() as SessionState)
+			toast.success('Removed from queue', { description: queueItem.video.title })
+		}
+	}
+
+	async function handlePlayNext() {
+		if (session.queue.length === 0 || isAdvancing) return
+
+		setIsAdvancing(true)
+		try {
+			const response = await fetch(`/api/session/${sessionId}/now-playing`, { method: 'POST' })
+			if (response.status === 404) {
+				setHasEnded(true)
+				return
+			}
+			if (response.ok) setSession(await response.json() as SessionState)
+		} finally {
+			setIsAdvancing(false)
+		}
 	}
 
 	if (hasEnded) {
@@ -95,18 +141,19 @@ export function GuestView({ sessionId }: GuestViewProps) {
 	return (
 		<main className="min-h-screen bg-[#0d0a14] px-4 py-6 text-white">
 			<div className="mx-auto max-w-lg">
-				<header className="mb-6 text-center"><img src="/karaoke_icon.png" alt="Karaoke" className="mx-auto mb-2 h-12 w-12 object-contain" /><h1 className="text-xl font-bold">Karaoke queue</h1><p className="text-sm text-zinc-400">Add a song for the host to play.</p></header>
+				<header className="mb-6 text-center"><img src="/karaoke_icon.png" alt="Karaoke" className="mx-auto h-12 w-12 object-contain" /></header>
 
 				<section className="mb-5 rounded-xl border border-zinc-800 bg-[#110d1c] p-4">
 					<p className="mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500">Now playing</p>
 					{session.nowPlaying ? <div className="flex items-center gap-3"><img src={session.nowPlaying.video.thumbnail} alt="" className="h-12 w-16 rounded object-cover" /><div className="min-w-0"><p className="truncate font-semibold">{session.nowPlaying.video.title}</p><p className="truncate text-sm text-zinc-400">{session.nowPlaying.video.channel}</p></div></div> : <p className="text-sm text-zinc-500">Nothing is playing yet.</p>}
+					{session.queue.length > 0 && <button onClick={() => void handlePlayNext()} disabled={isAdvancing} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 text-sm font-bold transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"><FiSkipForward size={18} />{isAdvancing ? 'Playing next...' : 'Play next'}</button>}
 				</section>
 
 				<div className="mb-5 flex gap-2"><input value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => event.key === 'Enter' && void handleSearch()} placeholder="Search songs or artists..." className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm placeholder:text-zinc-500 focus:outline-none" /><button onClick={() => void handleSearch()} disabled={isLoading} aria-label="Search" className="rounded-xl bg-purple-600 p-3 transition-colors hover:bg-purple-500 disabled:opacity-50"><FiSearch size={18} /></button></div>
 
-				{hasSearched && <section className="mb-5 overflow-hidden rounded-xl border border-zinc-800 bg-[#110d1c]">{results.length === 0 && !isLoading ? <p className="p-5 text-center text-sm text-zinc-500">No results found.</p> : results.map(video => <div key={video.id} className="flex items-center gap-3 border-b border-zinc-800 p-3 last:border-0"><img src={video.thumbnail} alt="" className="h-10 w-14 rounded object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{video.title}</p><p className="truncate text-xs text-zinc-400">{video.channel}</p></div><button onClick={() => void handleAdd(video)} className="flex shrink-0 items-center gap-1 rounded-lg bg-purple-600 px-2 py-2 text-xs font-semibold hover:bg-purple-500"><FiPlusCircle size={14} /> Add</button></div>)}</section>}
+				{hasSearched && <section className="mb-5 overflow-hidden rounded-xl border border-zinc-800 bg-[#110d1c]">{results.length === 0 && !isLoading ? <p className="p-5 text-center text-sm text-zinc-500">No results found.</p> : results.map(video => <div key={video.id} className="flex items-center gap-3 border-b border-zinc-800 p-3 last:border-0"><img src={video.thumbnail} alt="" className="h-10 w-14 rounded object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{video.title}</p><p className="truncate text-xs text-zinc-400">{video.channel}</p></div><div className="flex shrink-0 gap-2"><button onClick={() => void handlePlayNow(video)} disabled={Boolean(isPlayingVideoId)} aria-label={`Play ${video.title}`} className="rounded-lg bg-green-600 p-2 text-white transition-colors hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50"><BsFillPlayFill size={16} /></button><button onClick={() => void handleAdd(video)} className="flex items-center gap-1 rounded-lg bg-purple-600 px-2 py-2 text-xs font-semibold hover:bg-purple-500"><FiPlusCircle size={14} /> Add</button></div></div>)}</section>}
 
-				<section className="overflow-hidden rounded-xl border border-zinc-800 bg-[#110d1c]"><div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3"><h2 className="text-sm font-bold uppercase tracking-widest">Queue</h2><span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-bold">{session.queue.length}</span></div>{session.queue.length === 0 ? <p className="p-5 text-center text-sm text-zinc-500">The queue is empty.</p> : session.queue.map((item, index) => <div key={item.id} className="flex items-center gap-3 border-b border-zinc-800 p-3 last:border-0"><span className="w-4 text-sm font-bold text-zinc-600">{index + 1}</span><img src={item.video.thumbnail} alt="" className="h-10 w-14 rounded object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.video.title}</p><p className="truncate text-xs text-zinc-400">{item.video.channel}</p></div><button onClick={() => void handleRemove(item.id)} aria-label={`Remove ${item.video.title}`} className="p-2 text-zinc-500 hover:text-red-400"><FiX size={18} /></button></div>)}</section>
+				<section className="overflow-hidden rounded-xl border border-zinc-800 bg-[#110d1c]"><div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3"><h2 className="text-sm font-bold uppercase tracking-widest">Queue</h2><span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-bold">{session.queue.length}</span></div>{session.queue.length === 0 ? <p className="p-5 text-center text-sm text-zinc-500">The queue is empty.</p> : session.queue.map((item, index) => <div key={item.id} className="flex items-center gap-3 border-b border-zinc-800 p-3 last:border-0"><span className="w-4 text-sm font-bold text-zinc-600">{index + 1}</span><img src={item.video.thumbnail} alt="" className="h-10 w-14 rounded object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.video.title}</p><p className="truncate text-xs text-zinc-400">{item.video.channel}</p></div><button onClick={() => void handleRemove(item)} aria-label={`Remove ${item.video.title}`} className="p-2 text-zinc-500 hover:text-red-400"><FiX size={18} /></button></div>)}</section>
 			</div>
 		</main>
 	)
