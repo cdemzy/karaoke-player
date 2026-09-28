@@ -18,8 +18,10 @@ interface SessionState {
 
 const initialSessionState: SessionState = { nowPlaying: null, queue: [] }
 
-function RequesterPill({ name }: { name?: string }) {
-	return <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs text-purple-200"><FiUser aria-hidden size={12} /><span className="truncate">{name ?? 'Unknown'}</span></span>
+function RequesterPill({ name, isLarge = false, isCurrentUser = true }: { name?: string; isLarge?: boolean; isCurrentUser?: boolean }) {
+	const sizeClasses = isLarge ? 'gap-2 px-4 py-2 text-base font-semibold' : 'gap-1 px-2 py-0.5 text-xs'
+	const colorClasses = isCurrentUser ? 'bg-purple-500/15 text-purple-200' : 'bg-zinc-700/50 text-zinc-500'
+	return <span className={`mt-1 inline-flex max-w-full items-center rounded-full ${colorClasses} ${sizeClasses}`}><FiUser aria-hidden size={isLarge ? 18 : 12} /><span className="truncate">{name ?? 'Unknown'}</span></span>
 }
 
 export function GuestView({ sessionId }: GuestViewProps) {
@@ -170,7 +172,7 @@ export function GuestView({ sessionId }: GuestViewProps) {
 	return (
 		<main className="min-h-screen bg-[#0d0a14] px-4 py-6 text-white">
 			<div className="mx-auto max-w-lg">
-				<header className="mb-6 text-center"><img src="/karaoke_icon.png" alt="Karaoke" className="mx-auto h-12 w-12 object-contain" /></header>
+				<header className="relative mb-6 text-center"><img src="/karaoke_icon.png" alt="Karaoke" className="mx-auto h-12 w-12 object-contain" />{requesterName && <div className="absolute right-0 top-1/2 max-w-[45%] -translate-y-1/2"><RequesterPill name={requesterName} isLarge /></div>}</header>
 
 				<div className="mb-5 flex gap-2"><input value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => event.key === 'Enter' && void handleSearch()} placeholder="Search songs or artists..." className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm placeholder:text-zinc-500 focus:outline-none" /><button onClick={() => void handleSearch()} disabled={isLoading} aria-label="Search" className="rounded-xl bg-purple-600 p-3 transition-colors hover:bg-purple-500 disabled:opacity-50"><FiSearch size={18} /></button></div>
 
@@ -179,11 +181,11 @@ export function GuestView({ sessionId }: GuestViewProps) {
 				<section className="overflow-hidden rounded-xl border border-zinc-800 bg-[#110d1c]">
 					<div className="p-4">
 						<p className="mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500">Now playing</p>
-						{session.nowPlaying ? <div className="flex items-center gap-3"><img src={session.nowPlaying.video.thumbnail} alt="" className="h-12 w-16 rounded object-cover" /><div className="min-w-0"><p className="truncate font-semibold">{session.nowPlaying.video.title}</p><p className="truncate text-sm text-zinc-400">{session.nowPlaying.video.channel}</p><RequesterPill name={session.nowPlaying.requestedBy} /></div></div> : <p className="text-sm text-zinc-500">Nothing is playing yet.</p>}
+						{session.nowPlaying ? <div className="flex items-center gap-3"><img src={session.nowPlaying.video.thumbnail} alt="" className="h-12 w-16 rounded object-cover" /><div className="min-w-0"><p className="truncate font-semibold">{session.nowPlaying.video.title}</p><p className="truncate text-sm text-zinc-400">{session.nowPlaying.video.channel}</p><RequesterPill name={session.nowPlaying.requestedBy} isCurrentUser={session.nowPlaying.requestedBy === requesterName} /></div></div> : <p className="text-sm text-zinc-500">Nothing is playing yet.</p>}
 						{session.queue.length > 0 && <button onClick={() => void handlePlayNext()} disabled={isAdvancing} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 text-sm font-bold transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-50"><FiSkipForward size={18} />{isAdvancing ? 'Playing next...' : 'Play next'}</button>}
 					</div>
 					<div className="flex items-center justify-between border-y border-zinc-800 px-4 py-3"><h2 className="text-sm font-bold uppercase tracking-widest">Up next</h2><span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-bold">{session.queue.length}</span></div>
-					{session.queue.length === 0 ? <p className="p-5 text-center text-sm text-zinc-500">The queue is empty.</p> : session.queue.map((item, index) => <div key={item.id} className="flex items-center gap-3 border-b border-zinc-800 p-3 last:border-0"><span className="w-4 text-sm font-bold text-zinc-600">{index + 1}</span><img src={item.video.thumbnail} alt="" className="h-10 w-14 rounded object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.video.title}</p><p className="truncate text-xs text-zinc-400">{item.video.channel}</p><RequesterPill name={item.requestedBy} /></div><button onClick={() => void handleRemove(item)} aria-label={`Remove ${item.video.title}`} className="p-2 text-zinc-500 hover:text-red-400"><FiX size={18} /></button></div>)}
+					{session.queue.length === 0 ? <p className="p-5 text-center text-sm text-zinc-500">The queue is empty.</p> : session.queue.map((item, index) => <div key={item.id} className="flex items-center gap-3 border-b border-zinc-800 p-3 last:border-0"><span className="w-4 text-sm font-bold text-zinc-600">{index + 1}</span><img src={item.video.thumbnail} alt="" className="h-10 w-14 rounded object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.video.title}</p><p className="truncate text-xs text-zinc-400">{item.video.channel}</p><RequesterPill name={item.requestedBy} isCurrentUser={item.requestedBy === requesterName} /></div><button onClick={() => void handleRemove(item)} aria-label={`Remove ${item.video.title}`} className="p-2 text-zinc-500 hover:text-red-400"><FiX size={18} /></button></div>)}
 				</section>
 			</div>
 			{!requesterName && <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/70 px-4"><form onSubmit={handleNameSubmit} className="w-full max-w-sm rounded-2xl border border-zinc-700 bg-[#110d1c] p-6 shadow-2xl"><h1 className="text-xl font-bold">What&apos;s your name?</h1><p className="mt-2 text-sm text-zinc-400">We&apos;ll attach it to every song you add or play.</p><label className="mt-5 block text-sm font-medium" htmlFor="requester-name">Your name</label><input autoFocus id="requester-name" value={nameInput} onChange={event => setNameInput(event.target.value)} maxLength={50} required className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" /><button type="submit" className="mt-4 w-full rounded-xl bg-purple-600 px-4 py-3 font-bold transition-colors hover:bg-purple-500">Join session</button></form></div>}
