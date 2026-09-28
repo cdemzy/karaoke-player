@@ -85,6 +85,7 @@ export default function KaraokeApp() {
     });
     if (!response.ok) return;
     applySession(await response.json());
+    clearSearch();
     toast.success('Added to queue', { description: video.title });
   }
 
