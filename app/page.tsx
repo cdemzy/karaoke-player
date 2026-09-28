@@ -209,7 +209,7 @@ export default function KaraokeApp() {
                   <img src="/karaoke_icon.png" alt="Karaoke" className="h-20 w-20 object-contain" />
                   {sessionId && (
                     <div className="w-full max-w-md">
-                      <SessionQr sessionId={sessionId} />
+                      <SessionQr sessionId={sessionId} variant="hero" />
                     </div>
                   )}
                   <div className="w-full max-w-2xl flex flex-col gap-3">
