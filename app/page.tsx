@@ -1,16 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FiSearch, FiSkipForward, FiPlusCircle, FiX, FiList } from 'react-icons/fi';
 import { BsFillPlayFill } from 'react-icons/bs';
-
-interface Video {
-  id: string;
-  title: string;
-  channel: string;
-  thumbnail: string;
-}
+import { SessionQr } from '@/components/session-qr';
+import { sessionChannel, type QueueItem, type Video } from '@/lib/session';
+import { useRealtime } from '@/lib/realtime-client';
 
 interface Toast {
   id: number;
@@ -22,14 +18,49 @@ let toastCounter = 0;
 export default function KaraokeApp() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Video[]>([]);
-  const [queue, setQueue] = useState<Video[]>([]);
-  const [nowPlaying, setNowPlaying] = useState<Video | null>(null);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [nowPlaying, setNowPlaying] = useState<QueueItem | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isPlayerMode = queue.length > 0 || !!nowPlaying;
+
+  const applySession = useCallback((data: { queue: QueueItem[]; nowPlaying: QueueItem | null }) => {
+    setQueue(data.queue);
+    setNowPlaying(data.nowPlaying);
+  }, []);
+
+  useRealtime({
+    channels: sessionId ? [sessionChannel(sessionId)] : [],
+    events: ['session.updated'],
+    enabled: Boolean(sessionId),
+    onData: ({ data }) => applySession(data.session),
+  });
+
+  useEffect(() => {
+    async function initializeSession() {
+      const storedSessionId = sessionStorage.getItem('karaoke_session_id');
+      if (storedSessionId) {
+        const response = await fetch(`/api/session/${storedSessionId}`, { cache: 'no-store' });
+        if (response.ok) {
+          applySession(await response.json());
+          setSessionId(storedSessionId);
+          return;
+        }
+      }
+
+      const response = await fetch('/api/session', { method: 'POST' });
+      if (!response.ok) return;
+      const { sessionId: createdSessionId } = await response.json() as { sessionId: string };
+      sessionStorage.setItem('karaoke_session_id', createdSessionId);
+      setSessionId(createdSessionId);
+    }
+
+    void initializeSession();
+  }, [applySession]);
 
   function showToast(title: string) {
     const id = ++toastCounter;
@@ -58,27 +89,46 @@ export default function KaraokeApp() {
     setLoading(false);
   }
 
-  function addToQueue(video: Video) {
-    if (queue.some(v => v.id === video.id)) return;
-    setQueue(q => [...q, video]);
+  async function addToQueue(video: Video) {
+    if (!sessionId) return;
+    const response = await fetch(`/api/session/${sessionId}/queue`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ video }),
+    });
+    if (!response.ok) return;
+    applySession(await response.json());
     showToast(video.title);
   }
 
-  function playNow(video: Video) {
-    setNowPlaying(video);
+  async function playNow(video: Video) {
+    if (!sessionId) return;
+    const response = await fetch(`/api/session/${sessionId}/now-playing`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ video }),
+    });
+    if (!response.ok) return;
+    applySession(await response.json());
     clearSearch();
   }
 
-  function playNext() {
-    if (queue.length === 0) { setNowPlaying(null); return; }
-    const [next, ...rest] = queue;
-    setNowPlaying(next);
-    setQueue(rest);
+  async function playNext() {
+    if (!sessionId) return;
+    const response = await fetch(`/api/session/${sessionId}/now-playing`, { method: 'POST' });
+    if (!response.ok) return;
+    applySession(await response.json());
     clearSearch();
   }
 
-  function removeFromQueue(index: number) {
-    setQueue(q => q.filter((_, i) => i !== index));
+  async function removeFromQueue(queueItemId: string) {
+    if (!sessionId) return;
+    const response = await fetch(`/api/session/${sessionId}/queue`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ queueItemId }),
+    });
+    if (response.ok) applySession(await response.json());
   }
 
   /* Shared results list — used in both modes */
@@ -109,15 +159,15 @@ export default function KaraokeApp() {
               </div>
               <div className="flex gap-2 shrink-0">
                 <button
-                  onClick={() => playNow(video)}
+                  onClick={() => void playNow(video)}
                   aria-label="Play"
                   className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition-colors flex items-center justify-center"
                 >
                   <BsFillPlayFill size={14} />
                 </button>
                 <button
-                  onClick={() => addToQueue(video)}
-                  disabled={queue.some(v => v.id === video.id)}
+                  onClick={() => void addToQueue(video)}
+                  disabled={!sessionId}
                   aria-label="Add to queue"
                   className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white px-2 py-2 rounded-lg transition-colors flex items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap"
                 >
@@ -185,7 +235,19 @@ export default function KaraokeApp() {
                   transition={{ duration: 0.25 }}
                 >
                   <img src="/karaoke_icon.png" alt="Karaoke" className="h-20 w-20 object-contain" />
+                  {sessionId && (
+                    <div className="w-full max-w-md">
+                      <SessionQr sessionId={sessionId} />
+                    </div>
+                  )}
                   <div className="w-full max-w-2xl flex flex-col gap-3">
+                    {sessionId && (
+                      <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
+                        <span className="h-px flex-1 bg-zinc-800" />
+                        Or search here
+                        <span className="h-px flex-1 bg-zinc-800" />
+                      </div>
+                    )}
                     <input
                       ref={inputRef}
                       type="text"
@@ -270,28 +332,30 @@ export default function KaraokeApp() {
             <div className="flex-1 flex flex-col bg-[#110d1c] min-w-0">
               <header className={`flex items-center justify-between px-8 ${NAV_H} border-b border-zinc-800 shrink-0`}>
                 <img src="/karaoke_icon.png" alt="Karaoke" className="h-10 w-10 object-contain" />
-                {nowPlaying && (
-                  <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
+                  {nowPlaying && (
                     <div className="text-right max-w-sm">
                       <p className="text-xs text-zinc-500 uppercase tracking-widest">Now Playing</p>
-                      <p className="text-sm text-white truncate">{nowPlaying.title}</p>
+                      <p className="text-sm text-white truncate">{nowPlaying.video.title}</p>
                     </div>
+                  )}
+                  {nowPlaying && (
                     <button
-                      onClick={playNext}
+                      onClick={() => void playNext()}
                       aria-label="Next"
                       className="bg-purple-600 hover:bg-purple-500 text-white font-bold p-3 rounded-full transition-colors"
                     >
                       <FiSkipForward size={20} />
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </header>
 
               <div className="relative flex-1 flex items-center justify-center">
                 {nowPlaying ? (
                   <iframe
                     key={nowPlaying.id}
-                    src={`https://www.youtube.com/embed/${nowPlaying.id}?autoplay=1&rel=0`}
+                    src={`https://www.youtube.com/embed/${nowPlaying.video.id}?autoplay=1&rel=0`}
                     className="w-full h-full"
                     allow="autoplay; fullscreen"
                     allowFullScreen
@@ -301,7 +365,7 @@ export default function KaraokeApp() {
                     <FiList size={72} />
                     <p className="text-2xl">{queue.length} song{queue.length !== 1 ? 's' : ''} in queue</p>
                     <button
-                      onClick={playNext}
+                      onClick={() => void playNext()}
                       className="relative overflow-hidden flex items-center gap-3 text-white text-2xl font-bold px-12 py-5 rounded-full"
                       style={{ background: '#3b0764', boxShadow: '0 0 32px 6px #a855f755' }}
                     >
@@ -319,6 +383,8 @@ export default function KaraokeApp() {
 
             {/* Right sidebar — search lives here, not in nav */}
             <div className="w-md bg-[#110d1c] border-l border-zinc-800 flex flex-col shrink-0">
+
+              {sessionId && <SessionQr sessionId={sessionId} />}
 
               {/* Search bar embedded in sidebar content */}
               <div className="flex items-center gap-2 px-4 h-16 border-b border-zinc-800 shrink-0">
@@ -368,9 +434,9 @@ export default function KaraokeApp() {
                   <p className="text-zinc-600 text-sm text-center mt-8 px-4">Queue is empty.</p>
                 ) : (
                   <AnimatePresence initial={false}>
-                    {queue.map((video, i) => (
+                    {queue.map((item, i) => (
                       <motion.div
-                        key={`${video.id}-${i}`}
+                        key={item.id}
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
@@ -378,13 +444,13 @@ export default function KaraokeApp() {
                         className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 hover:bg-zinc-900 transition-colors overflow-hidden"
                       >
                         <span className="text-zinc-600 text-sm font-bold w-4 shrink-0">{i + 1}</span>
-                        <img src={video.thumbnail} alt={video.title} className="w-12 h-9 object-cover rounded shrink-0" />
+                        <img src={item.video.thumbnail} alt={item.video.title} className="w-12 h-9 object-cover rounded shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-semibold truncate">{video.title}</p>
-                          <p className="text-zinc-500 text-xs truncate">{video.channel}</p>
+                          <p className="text-white text-sm font-semibold truncate">{item.video.title}</p>
+                          <p className="text-zinc-500 text-xs truncate">{item.video.channel}</p>
                         </div>
                         <button
-                          onClick={() => removeFromQueue(i)}
+                          onClick={() => void removeFromQueue(item.id)}
                           aria-label="Remove"
                           className="text-zinc-600 hover:text-red-400 shrink-0 transition-colors"
                         >
@@ -399,7 +465,7 @@ export default function KaraokeApp() {
               {queue.length > 0 && (
                 <div className="px-4 py-3 border-t border-zinc-800 shrink-0">
                   <button
-                    onClick={playNext}
+                    onClick={() => void playNext()}
                     className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition-colors"
                   >
                     <FiSkipForward size={18} /> Play Next in Queue

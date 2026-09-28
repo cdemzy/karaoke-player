@@ -5,8 +5,15 @@ export function proxy(request: NextRequest) {
   const auth = request.cookies.get('karaoke_auth')?.value;
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isAuthApi = request.nextUrl.pathname === '/api/auth';
+  const isSessionPage = request.nextUrl.pathname.startsWith('/session/');
+  const isSessionRead = request.method === 'GET' && request.nextUrl.pathname.startsWith('/api/session/');
+  const isGuestQueueMutation = ['POST', 'DELETE'].includes(request.method)
+    && request.nextUrl.pathname.startsWith('/api/session/')
+    && request.nextUrl.pathname.endsWith('/queue');
+  const isSearchApi = request.nextUrl.pathname === '/api/search';
+  const isRealtimeApi = request.nextUrl.pathname === '/api/realtime';
 
-  if (isAuthApi) return NextResponse.next();
+  if (isAuthApi || isSessionPage || isSessionRead || isGuestQueueMutation || isSearchApi || isRealtimeApi) return NextResponse.next();
 
   if (process.env.APP_PASSWORD && auth === process.env.APP_PASSWORD) {
     if (isLoginPage) return NextResponse.redirect(new URL('/', request.url));
