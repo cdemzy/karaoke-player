@@ -305,7 +305,7 @@ export default function KaraokeApp() {
               <header className={`flex items-center justify-between px-8 ${NAV_H} border-b border-zinc-800 shrink-0`}>
                 <div className="flex items-center gap-4">
                   <img src="/karaoke_icon.png" alt="Karaoke" className="h-10 w-10 object-contain" />
-                  {nowPlaying && <span className="inline-flex max-w-64 items-center gap-2 rounded-full bg-purple-500/15 px-4 py-2 text-base font-semibold text-purple-100"><FiUser aria-hidden size={18} /><span className="truncate">{nowPlaying.requestedBy ?? 'Unknown'}</span></span>}
+                  {nowPlaying && <span className="inline-flex max-w-64 items-center gap-2 rounded-full border border-purple-300/50 bg-purple-500/30 px-4 py-2 text-base font-semibold text-purple-50 shadow-[0_0_24px_5px_rgba(168,85,247,0.55)]"><FiUser aria-hidden size={18} /><span className="truncate">{nowPlaying.requestedBy ?? 'Unknown'}</span></span>}
                 </div>
                 <div className="flex items-center gap-4">
                   {nowPlaying && (
