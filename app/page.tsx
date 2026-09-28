@@ -244,7 +244,7 @@ export default function KaraokeApp() {
                     {sessionId && (
                       <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-widest text-zinc-500">
                         <span className="h-px flex-1 bg-zinc-800" />
-                        Or search here
+                        Or search on this TV
                         <span className="h-px flex-1 bg-zinc-800" />
                       </div>
                     )}

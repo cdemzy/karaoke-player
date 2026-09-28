@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Smartphone } from 'lucide-react'
 import QRCode from 'qrcode'
 
 interface SessionQrProps {
@@ -23,15 +24,18 @@ export function SessionQr({ sessionId }: SessionQrProps) {
 	}, [sessionId])
 
 	return (
-		<div className="rounded-xl border border-zinc-800 bg-[#1a1530] px-4 py-5 shrink-0">
-			<p className="text-center text-sm font-bold text-white">Scan to join the queue</p>
-			<p className="mt-1 text-center text-xs text-zinc-400">Let guests add their songs from their phone.</p>
+		<div className="rounded-xl border border-purple-500/30 bg-[#1a1530] px-4 py-5 shadow-lg shadow-purple-950/20 shrink-0">
+			<div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/15 text-purple-300">
+				<Smartphone size={22} aria-hidden="true" />
+			</div>
+			<p className="mt-3 text-center text-base font-bold text-white">Join on your phone</p>
+			<p className="mt-1 text-center text-xs leading-5 text-zinc-300">Scan to browse songs, add to the queue, and control this TV player.</p>
 			{qrCode ? (
-				<img src={qrCode.dataUrl} alt="QR code for this karaoke session" className="mx-auto mt-4 w-40 rounded-lg bg-white p-2" />
+				<img src={qrCode.dataUrl} alt="QR code to join this karaoke session on your phone" className="mx-auto mt-4 w-44 rounded-lg bg-white p-2" />
 			) : (
-				<div className="mx-auto mt-4 h-40 w-40 animate-pulse rounded-lg bg-zinc-800" />
+				<div className="mx-auto mt-4 h-44 w-44 animate-pulse rounded-lg bg-zinc-800" />
 			)}
-			<p className="mt-3 break-all text-center text-xs text-zinc-400">{qrCode?.url}</p>
+			<p className="mt-3 break-all text-center text-xs text-zinc-500">{qrCode?.url}</p>
 		</div>
 	)
 }
