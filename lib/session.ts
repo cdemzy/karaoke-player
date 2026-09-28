@@ -10,6 +10,7 @@ export interface Video {
 export interface QueueItem {
 	id: string
 	video: Video
+	requestedBy?: string
 }
 
 export interface SessionData {
@@ -35,6 +36,10 @@ export function isVideo(value: unknown): value is Video {
 
 	const video = value as Record<string, unknown>
 	return ['id', 'title', 'channel', 'thumbnail'].every(key => typeof video[key] === 'string' && video[key].trim().length > 0)
+}
+
+export function isRequesterName(value: unknown): value is string {
+	return typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 50
 }
 
 export function parseSession(sessionValue: unknown): SessionData {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { FiSearch, FiSkipForward, FiPlusCircle, FiX, FiList } from 'react-icons/fi';
+import { FiSearch, FiSkipForward, FiPlusCircle, FiUser, FiX, FiList } from 'react-icons/fi';
 import { BsFillPlayFill } from 'react-icons/bs';
 import { toast } from 'sonner';
 import { SessionQr } from '@/components/session-qr';
@@ -81,7 +81,7 @@ export default function KaraokeApp() {
     const response = await fetch(`/api/session/${sessionId}/queue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ video }),
+      body: JSON.stringify({ video, requestedBy: 'Host' }),
     });
     if (!response.ok) return;
     applySession(await response.json());
@@ -94,7 +94,7 @@ export default function KaraokeApp() {
     const response = await fetch(`/api/session/${sessionId}/now-playing`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ video }),
+      body: JSON.stringify({ video, requestedBy: 'Host' }),
     });
     if (!response.ok) return;
     applySession(await response.json());
@@ -303,7 +303,10 @@ export default function KaraokeApp() {
             {/* Main player */}
             <div className="flex-1 flex flex-col bg-[#110d1c] min-w-0">
               <header className={`flex items-center justify-between px-8 ${NAV_H} border-b border-zinc-800 shrink-0`}>
-                <img src="/karaoke_icon.png" alt="Karaoke" className="h-10 w-10 object-contain" />
+                <div className="flex items-center gap-4">
+                  <img src="/karaoke_icon.png" alt="Karaoke" className="h-10 w-10 object-contain" />
+                  {nowPlaying && <span className="inline-flex max-w-64 items-center gap-2 rounded-full bg-purple-500/15 px-4 py-2 text-base font-semibold text-purple-100"><FiUser aria-hidden size={18} /><span className="truncate">{nowPlaying.requestedBy ?? 'Unknown'}</span></span>}
+                </div>
                 <div className="flex items-center gap-4">
                   {nowPlaying && (
                     <div className="text-right max-w-sm">
@@ -420,6 +423,7 @@ export default function KaraokeApp() {
                         <div className="flex-1 min-w-0">
                           <p className="text-white text-sm font-semibold truncate">{item.video.title}</p>
                           <p className="text-zinc-500 text-xs truncate">{item.video.channel}</p>
+						  <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs text-purple-200"><FiUser aria-hidden size={12} /><span className="truncate">{item.requestedBy ?? 'Unknown'}</span></span>
                         </div>
                         <button
                           onClick={() => void removeFromQueue(item)}

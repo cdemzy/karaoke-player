@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { redis } from '@/lib/redis'
 import { realtime } from '@/lib/realtime'
-import { isSessionId, isVideo, parseSession, SESSION_TTL_SECONDS, sessionChannel, sessionKey } from '@/lib/session'
+import { isRequesterName, isSessionId, isVideo, parseSession, SESSION_TTL_SECONDS, sessionChannel, sessionKey } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,8 +14,8 @@ local sessionJson = redis.call('GET', KEYS[1])
 if not sessionJson then return nil end
 local session = cjson.decode(sessionJson)
 local video = cjson.decode(ARGV[1])
-table.insert(session.queue, { id = ARGV[2], video = video })
-redis.call('SET', KEYS[1], cjson.encode(session), 'EX', ARGV[3])
+table.insert(session.queue, { id = ARGV[2], video = video, requestedBy = ARGV[3] })
+redis.call('SET', KEYS[1], cjson.encode(session), 'EX', ARGV[4])
 return cjson.encode(session)
 `
 
@@ -48,13 +48,14 @@ export async function POST(request: Request, { params }: RouteContext) {
 	const { id } = await params
 	if (!isSessionId(id)) return NextResponse.json({ error: 'session_not_found' }, { status: 404 })
 
-	const body = await request.json().catch(() => null) as { video?: unknown } | null
+	const body = await request.json().catch(() => null) as { video?: unknown; requestedBy?: unknown } | null
 	if (!isVideo(body?.video)) return NextResponse.json({ error: 'invalid_video' }, { status: 400 })
+	if (!isRequesterName(body?.requestedBy)) return NextResponse.json({ error: 'invalid_requester_name' }, { status: 400 })
 
-	const sessionValue = await redis.eval<[string, string, string], unknown>(
+	const sessionValue = await redis.eval<[string, string, string, string], unknown>(
 		addToQueueScript,
 		[sessionKey(id)],
-		[JSON.stringify(body.video), crypto.randomUUID(), String(SESSION_TTL_SECONDS)],
+		[JSON.stringify(body.video), crypto.randomUUID(), body.requestedBy.trim(), String(SESSION_TTL_SECONDS)],
 	)
 	return sessionResponse(id, sessionValue)
 }
