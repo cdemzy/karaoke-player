@@ -9,6 +9,24 @@ type VideoItem = {
   };
 };
 
+const NAMED_HTML_ENTITIES: Record<string, string> = {
+	'&amp;': '&',
+	'&apos;': "'",
+	'&gt;': '>',
+	'&lt;': '<',
+	'&quot;': '"',
+}
+
+function decodeHtmlEntities(value: string): string {
+	return value.replace(/&(?:#(x[\da-f]+|\d+)|amp|apos|gt|lt|quot);/gi, (entity, numericValue) => {
+		if (!numericValue) return NAMED_HTML_ENTITIES[entity.toLowerCase()] ?? entity
+
+		const codePoint = Number.parseInt(numericValue, numericValue[0].toLowerCase() === 'x' ? 16 : 10)
+		const isUnicodeScalar = codePoint >= 0 && codePoint <= 0x10FFFF && (codePoint < 0xD800 || codePoint > 0xDFFF)
+		return isUnicodeScalar ? String.fromCodePoint(codePoint) : entity
+	})
+}
+
 function getApiKeys(): string[] {
   return [
     process.env.YOUTUBE_API_KEY,
@@ -63,8 +81,8 @@ export async function GET(req: Request) {
       .slice(0, 6)
       .map(item => ({
         id: item.id.videoId,
-        title: item.snippet.title,
-        channel: item.snippet.channelTitle,
+        title: decodeHtmlEntities(item.snippet.title),
+        channel: decodeHtmlEntities(item.snippet.channelTitle),
         thumbnail: item.snippet.thumbnails.medium.url,
       }));
 
