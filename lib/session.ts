@@ -1,4 +1,6 @@
 export const SESSION_TTL_SECONDS = 60 * 60 * 6
+const JOIN_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+const JOIN_CODE_LENGTH = 6
 
 export interface Video {
 	id: string
@@ -28,7 +30,16 @@ export function sessionChannel(sessionId: string): string {
 }
 
 export function isSessionId(value: string): boolean {
-	return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+	return isJoinCode(value) || /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+export function isJoinCode(value: string): boolean {
+	return new RegExp(`^[${JOIN_CODE_ALPHABET}]{${JOIN_CODE_LENGTH}}$`).test(value.toUpperCase())
+}
+
+export function createJoinCode(): string {
+	const randomValues = crypto.getRandomValues(new Uint32Array(JOIN_CODE_LENGTH))
+	return Array.from(randomValues, value => JOIN_CODE_ALPHABET[value % JOIN_CODE_ALPHABET.length]).join('')
 }
 
 export function isVideo(value: unknown): value is Video {

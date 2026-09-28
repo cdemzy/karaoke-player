@@ -24,18 +24,23 @@ export function SessionQr({ sessionId }: SessionQrProps) {
 	}, [sessionId])
 
 	return (
-		<div className="rounded-xl border border-purple-500/30 bg-[#1a1530] px-4 py-5 shadow-lg shadow-purple-950/20 shrink-0">
-			<div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/15 text-purple-300">
-				<Smartphone size={22} aria-hidden="true" />
+		<section className="border-b border-white/10 bg-[#0c0a1d] px-4 py-4 shadow-[0_16px_30px_rgba(0,0,0,0.24)]">
+			<div className="flex items-start gap-3">
+				<div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-violet-400">
+					<Smartphone size={17} aria-hidden="true" />
+				</div>
+				<div>
+					<p className="text-xs font-bold uppercase tracking-wide text-white">Join on your phone</p>
+					<p className="mt-1 text-[11px] leading-4 text-zinc-400">Scan to browse songs and add them to the queue.</p>
+				</div>
 			</div>
-			<p className="mt-3 text-center text-base font-bold text-white">Join on your phone</p>
-			<p className="mt-1 text-center text-xs leading-5 text-zinc-300">Scan to browse songs, add to the queue, and control this TV player.</p>
 			{qrCode ? (
-				<img src={qrCode.dataUrl} alt="QR code to join this karaoke session on your phone" className="mx-auto mt-4 w-44 rounded-lg bg-white p-2" />
+				<img src={qrCode.dataUrl} alt="QR code to join this karaoke session on your phone" className="mx-auto mt-3 w-28 rounded-lg bg-white p-1.5 shadow-[0_0_18px_rgba(139,92,246,0.55)]" />
 			) : (
-				<div className="mx-auto mt-4 h-44 w-44 animate-pulse rounded-lg bg-zinc-800" />
+				<div className="mx-auto mt-3 h-28 w-28 animate-pulse rounded-lg bg-zinc-800" />
 			)}
-			<p className="mt-3 break-all text-center text-xs text-zinc-500">{qrCode?.url}</p>
-		</div>
+			<p className="mt-2 text-center text-[9px] font-medium uppercase tracking-wider text-zinc-500">Session code</p>
+			<p className="mt-0.5 text-center text-sm font-bold tracking-[0.18em] text-white">{sessionId.toUpperCase()}</p>
+		</section>
 	)
 }
