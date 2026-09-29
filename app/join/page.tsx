@@ -25,9 +25,7 @@ export default function JoinSessionPage() {
 	return (
 		<main className="flex min-h-screen items-center justify-center bg-[#0d0a14] px-5 text-white">
 			<form onSubmit={handleSubmit} className="w-full max-w-sm rounded-2xl border border-violet-500/40 bg-[#110d1c] p-6 shadow-[0_0_36px_rgba(124,58,237,0.18)]">
-				<p className="text-xs font-bold uppercase tracking-[0.22em] text-violet-300">Karaoke remote</p>
-				<h1 className="mt-2 text-2xl font-bold">Join a session</h1>
-				<p className="mt-2 text-sm leading-6 text-zinc-400">Enter the code shown on the TV to browse songs and control the queue.</p>
+				<img src="/karaoke_icon.png" alt="Karaoke" className="mx-auto h-16 w-16 object-contain" />
 				<label className="mt-6 block text-sm font-medium" htmlFor="session-code">Session code</label>
 				<input
 					autoFocus
@@ -39,7 +37,14 @@ export default function JoinSessionPage() {
 					className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-center font-mono text-xl font-bold tracking-[0.25em] text-white uppercase placeholder:text-zinc-600 focus:border-violet-500 focus:outline-none"
 				/>
 				{error && <p className="mt-2 text-sm text-red-300" role="alert">{error}</p>}
-				<button type="submit" className="mt-5 w-full rounded-xl bg-violet-600 px-4 py-3 font-bold transition hover:bg-violet-500">Join session</button>
+				<button type="submit" className="relative mt-5 flex w-full items-center justify-center overflow-hidden rounded-xl bg-violet-600 px-4 py-3 font-bold transition-colors hover:bg-violet-500">
+					<div aria-hidden style={{ position: 'absolute', inset: 0 }}>
+						<div style={{ position: 'absolute', width: 90, height: 90, borderRadius: '50%', background: '#a855f7', top: '-45%', left: '5%', filter: 'blur(20px)', animation: 'blob-1 7s ease-in-out infinite' }} />
+						<div style={{ position: 'absolute', width: 75, height: 75, borderRadius: '50%', background: '#d946ef', top: '15%', left: '48%', filter: 'blur(18px)', animation: 'blob-2 9s ease-in-out infinite' }} />
+						<div style={{ position: 'absolute', width: 70, height: 70, borderRadius: '50%', background: '#7c3aed', top: '-20%', left: '72%', filter: 'blur(16px)', animation: 'blob-3 6s ease-in-out infinite' }} />
+					</div>
+					<span className="relative">Join session</span>
+				</button>
 			</form>
 		</main>
 	)

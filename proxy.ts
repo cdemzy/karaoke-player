@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const auth = request.cookies.get('karaoke_auth')?.value;
   const isLoginPage = request.nextUrl.pathname === '/login';
+  const isJoinPage = request.nextUrl.pathname === '/join';
   const isAuthApi = request.nextUrl.pathname === '/api/auth';
   const isSessionPage = request.nextUrl.pathname.startsWith('/session/');
   const isSessionRead = request.method === 'GET' && request.nextUrl.pathname.startsWith('/api/session/');
@@ -16,7 +17,7 @@ export function proxy(request: NextRequest) {
   const isSearchApi = request.nextUrl.pathname === '/api/search';
   const isRealtimeApi = request.nextUrl.pathname === '/api/realtime';
 
-  if (isAuthApi || isSessionPage || isSessionRead || isGuestQueueMutation || isGuestPlaybackMutation || isSearchApi || isRealtimeApi) return NextResponse.next();
+  if (isAuthApi || isJoinPage || isSessionPage || isSessionRead || isGuestQueueMutation || isGuestPlaybackMutation || isSearchApi || isRealtimeApi) return NextResponse.next();
 
   if (process.env.APP_PASSWORD && auth === process.env.APP_PASSWORD) {
     if (isLoginPage) return NextResponse.redirect(new URL('/', request.url));

@@ -25,6 +25,15 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* iOS zooms the viewport when focusing controls smaller than 16px. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 @keyframes blob-1 {
   0%   { transform: translate(0%, 0%) scale(1); }
   33%  { transform: translate(40%, -20%) scale(1.2); }
@@ -45,9 +54,9 @@ body {
 }
 
 /* TV focus navigation — strong visible indicator for arrow key focus */
-@keyframes now-playing-radar {
-  0% { opacity: 0.85; transform: scale(1); }
-  70%, 100% { opacity: 0; transform: scale(1.65); }
+@keyframes now-playing-glow {
+  0%, 100% { opacity: 0.25; box-shadow: 0 0 8px 3px rgb(232 121 249 / 0.2); }
+  50% { opacity: 0.8; box-shadow: 0 0 20px 8px rgb(232 121 249 / 0.48); }
 }
 
 :focus-visible,
