@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { FiSearch, FiSkipForward, FiPlusCircle, FiX, FiList, FiMusic } from 'react-icons/fi';
 import { BsFillPlayFill } from 'react-icons/bs';
-import { CircleUserRound, MicVocal } from 'lucide-react';
+import { MicVocal, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { SessionQr } from '@/components/session-qr';
 import { sessionChannel, type QueueItem, type Video } from '@/lib/session';
@@ -409,7 +409,7 @@ export default function KaraokeApp() {
                         <div className="flex-1 min-w-0">
                           <p className="truncate text-xs font-semibold text-white">{item.video.title}</p>
                           <p className="truncate text-[10px] text-zinc-500">{item.video.channel}</p>
-						  <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs text-purple-200"><CircleUserRound aria-hidden size={12} /><span className="truncate">{item.requestedBy ?? 'Unknown'}</span></span>
+						  <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs text-purple-200"><UserRound aria-hidden size={12} /><span className="truncate">{item.requestedBy ?? 'Unknown'}</span></span>
                         </div>
                       </motion.div>
                     ))}
