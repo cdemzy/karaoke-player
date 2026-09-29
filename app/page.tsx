@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { FiSearch, FiSkipForward, FiPlusCircle, FiUser, FiX, FiList } from 'react-icons/fi';
+import { FiSearch, FiSkipForward, FiPlusCircle, FiX, FiList, FiMusic } from 'react-icons/fi';
 import { BsFillPlayFill } from 'react-icons/bs';
+import { CircleUserRound, MicVocal } from 'lucide-react';
 import { toast } from 'sonner';
 import { SessionQr } from '@/components/session-qr';
 import { sessionChannel, type QueueItem, type Video } from '@/lib/session';
@@ -109,19 +110,6 @@ export default function KaraokeApp() {
     clearSearch();
   }
 
-  async function removeFromQueue(queueItem: QueueItem) {
-    if (!sessionId) return;
-    const response = await fetch(`/api/session/${sessionId}/queue`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ queueItemId: queueItem.id }),
-    });
-    if (response.ok) {
-      applySession(await response.json());
-      toast.success('Removed from queue', { description: queueItem.video.title });
-    }
-  }
-
   /* Shared results list — used in both modes */
   const ResultsList = (
     <AnimatePresence>
@@ -141,35 +129,35 @@ export default function KaraokeApp() {
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2 }}
-              className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 hover:bg-zinc-900 transition-colors"
+              className="flex items-center gap-4 px-5 py-4 border-b border-zinc-800 hover:bg-zinc-900 transition-colors"
             >
-              <img src={video.thumbnail} alt={video.title} className="w-16 h-11 object-cover rounded shrink-0" />
+              <img src={video.thumbnail} alt={video.title} className="w-24 h-16 object-cover rounded-md shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-semibold truncate">{video.title}</p>
-                <p className="text-zinc-400 text-xs truncate">{video.channel}</p>
+                <p className="text-white text-lg font-semibold truncate">{video.title}</p>
+                <p className="text-zinc-400 text-sm truncate">{video.channel}</p>
               </div>
-              <div className="flex gap-2 shrink-0">
+              <div className="flex gap-3 shrink-0">
                 <button
                   onClick={() => void playNow(video)}
                   aria-label="Play"
-                  className="bg-green-600 hover:bg-green-500 text-white p-2 rounded-lg transition-colors flex items-center justify-center"
+                  className="bg-green-600 hover:bg-green-500 text-white p-3.5 rounded-lg transition-colors flex items-center justify-center"
                 >
-                  <BsFillPlayFill size={14} />
+                  <BsFillPlayFill size={18} />
                 </button>
                 <button
                   onClick={() => void addToQueue(video)}
                   disabled={!sessionId}
                   aria-label="Add to queue"
-                  className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white px-2 py-2 rounded-lg transition-colors flex items-center justify-center gap-1 text-xs font-semibold whitespace-nowrap"
+                  className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white px-4 py-3.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-sm font-semibold whitespace-nowrap"
                 >
-                  <FiPlusCircle size={12} /> Add to queue
+                  <FiPlusCircle size={16} /> Add to queue
                 </button>
               </div>
             </motion.div>
           ))}
           {results.length > 0 && (
-            <button onClick={clearSearch} className="w-full text-xs text-zinc-600 hover:text-zinc-400 py-2 transition-colors flex items-center justify-center gap-1">
-              <FiX size={12} /> Close results
+            <button onClick={clearSearch} className="w-full text-sm text-zinc-600 hover:text-zinc-400 py-3 transition-colors flex items-center justify-center gap-1.5">
+              <FiX size={14} /> Close results
             </button>
           )}
         </motion.div>
@@ -258,9 +246,9 @@ export default function KaraokeApp() {
 
                   {/* Search bar + results centered in content area */}
                   <div className="flex-1 overflow-y-auto">
-                    <div className="max-w-3xl mx-auto px-4 pt-5">
+                    <div className="max-w-5xl mx-auto px-6 pt-6">
                       {/* Search bar */}
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-3 mb-2">
                         <input
                           ref={inputRef}
                           type="text"
@@ -268,15 +256,15 @@ export default function KaraokeApp() {
                           onChange={e => setQuery(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && search()}
                           placeholder="Search songs or artists..."
-                          className="flex-1 bg-zinc-800 text-white px-4 py-2.5 rounded-xl border border-zinc-700 placeholder-zinc-500 text-sm focus:outline-none"
+                          className="flex-1 bg-zinc-800 text-white px-5 py-3.5 rounded-xl border border-zinc-700 placeholder-zinc-500 text-base focus:outline-none"
                         />
                         <button
                           onClick={search}
                           disabled={loading}
                           aria-label="Search"
-                          className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold p-2.5 rounded-xl transition-colors shrink-0"
+                          className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold p-3.5 rounded-xl transition-colors shrink-0"
                         >
-                          {loading ? <span className="text-xs px-1">...</span> : <FiSearch size={17} />}
+                          {loading ? <span className="text-sm px-1">...</span> : <FiSearch size={21} />}
                         </button>
                       </div>
                       {/* Results directly below search bar */}
@@ -294,34 +282,22 @@ export default function KaraokeApp() {
         {isPlayerMode && (
           <motion.div
             key="player"
-            className="flex h-full overflow-hidden bg-[#050507] p-3 md:p-4"
+            className="flex h-full overflow-hidden bg-black"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.35 }}
           >
             {/* Main player */}
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-l-xl border border-violet-500/70 bg-black shadow-[0_0_34px_rgba(124,58,237,0.18)]">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-black">
               <header className={`flex items-center justify-between bg-[#0c0a1b] px-5 ${NAV_H} shrink-0 border-b border-white/10`}>
-                <div className="flex items-center gap-4">
-                  <img src="/karaoke_icon.png" alt="Karaoke" className="h-8 w-8 object-contain" />
-                  {nowPlaying && <span className="inline-flex max-w-48 items-center gap-2 rounded-full bg-violet-500/15 px-3 py-1.5 text-xs font-semibold text-violet-200"><FiUser aria-hidden size={14} /><span className="truncate">{nowPlaying.requestedBy ?? 'Unknown'}</span></span>}
-                </div>
+                {nowPlaying && <span className="relative inline-flex max-w-48 items-center gap-2 rounded-full border border-violet-500/40 bg-violet-500/15 px-3 py-1.5 text-xs font-semibold text-violet-200"><span aria-hidden className="pointer-events-none absolute inset-0 animate-[now-playing-radar_3.2s_ease-out_infinite] rounded-full border border-fuchsia-400" /><MicVocal aria-hidden size={14} className="relative z-10" /><span className="relative z-10 truncate">{nowPlaying.requestedBy ?? 'Unknown'}</span></span>}
                 <div className="flex items-center gap-4">
                   {nowPlaying && (
                     <div className="max-w-sm text-right">
                       <p className="text-[10px] uppercase tracking-widest text-zinc-500">Now playing</p>
                       <p className="truncate text-xs font-semibold text-white">{nowPlaying.video.title}</p>
                     </div>
-                  )}
-                  {nowPlaying && (
-                    <button
-                      onClick={() => void playNext()}
-                      aria-label="Next"
-                      className="rounded-full bg-violet-600 p-2.5 font-bold text-white shadow-[0_0_14px_rgba(139,92,246,0.7)] transition-colors hover:bg-violet-500"
-                    >
-                      <FiSkipForward size={20} />
-                    </button>
                   )}
                 </div>
               </header>
@@ -356,7 +332,7 @@ export default function KaraokeApp() {
             </div>
 
             {/* Right sidebar — search lives here, not in nav */}
-            <aside className="flex w-72 shrink-0 flex-col overflow-hidden rounded-r-xl border-y border-r border-violet-500/70 bg-[#090817] shadow-[0_0_34px_rgba(124,58,237,0.18)]">
+            <aside className="flex w-72 shrink-0 flex-col overflow-hidden bg-[#090817]">
 
               {sessionId && <SessionQr sessionId={sessionId} />}
 
@@ -398,7 +374,12 @@ export default function KaraokeApp() {
 
               {/* Queue header */}
               <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-200">Up next</h2>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-violet-400">
+                    <FiMusic size={17} aria-hidden="true" />
+                  </div>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-200">Up next</h2>
+                </div>
                 <span className="rounded-full bg-violet-600 px-2 py-0.5 text-xs font-bold text-white">{queue.length}</span>
               </div>
 
@@ -415,38 +396,29 @@ export default function KaraokeApp() {
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="mb-1 flex items-center gap-2 overflow-hidden rounded-lg bg-white/[0.045] px-2 py-2 transition-colors hover:bg-white/[0.09]"
+                        className="mb-1 flex items-center gap-2 overflow-hidden rounded-lg bg-white/[0.045] px-2 py-2"
                       >
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-white/[0.08] text-xs font-bold text-zinc-300">{i + 1}</span>
-                        <img src={item.video.thumbnail} alt={item.video.title} className="h-8 w-11 shrink-0 rounded object-cover" />
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-violet-500/15 text-lg font-bold text-violet-200">{i + 1}</span>
                         <div className="flex-1 min-w-0">
                           <p className="truncate text-xs font-semibold text-white">{item.video.title}</p>
                           <p className="truncate text-[10px] text-zinc-500">{item.video.channel}</p>
-						  <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs text-purple-200"><FiUser aria-hidden size={12} /><span className="truncate">{item.requestedBy ?? 'Unknown'}</span></span>
+						  <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-purple-500/15 px-2 py-0.5 text-xs text-purple-200"><CircleUserRound aria-hidden size={12} /><span className="truncate">{item.requestedBy ?? 'Unknown'}</span></span>
                         </div>
-                        <button
-                          onClick={() => void removeFromQueue(item)}
-                          aria-label="Remove"
-                          className="text-zinc-600 hover:text-red-400 shrink-0 transition-colors"
-                        >
-                          <FiX size={18} />
-                        </button>
                       </motion.div>
                     ))}
                   </AnimatePresence>
                 )}
               </div>
 
-              {queue.length > 0 && (
-                <div className="shrink-0 border-t border-white/10 p-3">
-                  <button
-                    onClick={() => void playNext()}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-700 to-purple-500 py-3 text-sm font-bold text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] transition hover:brightness-110"
-                  >
-                    <FiSkipForward size={18} /> Skip song
-                  </button>
-                </div>
-              )}
+              <div className="shrink-0 border-t border-white/10 p-3">
+                <button
+                  onClick={() => void playNext()}
+                  disabled={!nowPlaying && queue.length === 0}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-700 to-purple-500 py-3 text-sm font-bold text-white shadow-[0_0_20px_rgba(139,92,246,0.4)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {nowPlaying ? <><FiSkipForward size={18} /> Play Next</> : <><BsFillPlayFill size={18} /> Play</>}
+                </button>
+              </div>
             </aside>
           </motion.div>
         )}

@@ -45,6 +45,11 @@ body {
 }
 
 /* TV focus navigation — strong visible indicator for arrow key focus */
+@keyframes now-playing-radar {
+  0% { opacity: 0.85; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.65); }
+}
+
 :focus-visible,
 button:focus-visible,
 input:focus-visible,
