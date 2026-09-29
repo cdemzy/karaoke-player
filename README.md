@@ -2,7 +2,7 @@
 
 A web-based karaoke app built for searching for songs, build a queue, and play them one by one for your crowd.
 
-Version 1.1.0
+Version 1.1.1
 
 ## Tech Stack
 
